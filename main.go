@@ -15,14 +15,14 @@ func main() {
 
 	r.POST("/start", func(c *gin.Context) {
 		if !utils.FileExists("./minecraft-server/server.jar") || !utils.FileExists("./minecraft-server") {
-			resp, err := http.Get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+			manifestRes, err := http.Get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "Failed to fetch version manifest",
 				})
 				return
 			}
-			defer resp.Body.Close()
+			defer manifestRes.Body.Close()
 
 			var manifest struct {
 				Latest struct {
@@ -36,7 +36,7 @@ func main() {
 				}
 			}
 
-			if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+			if err := json.NewDecoder(manifestRes.Body).Decode(&manifest); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "Failed to decode version manifest",
 				})
@@ -60,14 +60,14 @@ func main() {
 				return
 			}
 
-			res2, err := http.Get(versionURL)
+			versionRes, err := http.Get(versionURL)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "Failed to fetch latest version details",
 				})
 				return
 			}
-			defer res2.Body.Close()
+			defer versionRes.Body.Close()
 
 			var versionDetails struct {
 				Downloads struct {
@@ -76,7 +76,7 @@ func main() {
 					} `json:"server"`
 				} `json:"downloads"`
 			}
-			if err := json.NewDecoder(res2.Body).Decode(&versionDetails); err != nil {
+			if err := json.NewDecoder(versionRes.Body).Decode(&versionDetails); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "Failed to decode version details",
 				})
