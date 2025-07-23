@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  mc-manager:
+    build: .
+    ports:
+      - "8080:8080" # Port for Go server
+      - "25565:25565" # Port for minecraft server
+    volumes:
+      - ./minecraft-server:/app/minecraft-server
+    restart: unless-stopped
