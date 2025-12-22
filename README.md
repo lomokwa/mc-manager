@@ -22,7 +22,7 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 3. Access the API endpoints through `http://localhost:8080`.
 
 # Current Tasks
-- [ ] Implement server start functionality
+- [x] Implement server start functionality
 - [ ] Add server stop functionality
 - [ ] Add file upload/download capabilities
 - [ ] Add server configuration management
