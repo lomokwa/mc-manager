@@ -9,3 +9,9 @@ func StartServerProcess() (string, error) {
 	output, err := cmd.CombinedOutput()
 	return string(output), err
 }
+
+func StopServerProcess() (string, error) {
+	cmd := exec.Command("echo", "Stopping server...")
+	output, err := cmd.CombinedOutput()
+	return string(output), err
+}
