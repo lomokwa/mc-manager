@@ -24,7 +24,3 @@ func StartServerHandler(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"output": output})
 }
-
-func StopServerHandler(c *gin.Context) {
-	
-}

@@ -9,7 +9,7 @@ func main() {
 	r := gin.Default()
 
 	// Routes
-	r.POST("/start", handlers.StartServerHandler)
+	r.POST("/api/start", handlers.StartServerHandler)
 
 	r.Run()
 }
