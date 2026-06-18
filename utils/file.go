@@ -46,5 +46,5 @@ func WriteFile(filePath string, fileContent []byte) error {
 		return fmt.Errorf("failed to create file %s: %w", filePath, err)
 	}
 
-	return err
+	return nil
 }

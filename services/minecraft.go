@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/lomokwa/mc-manager/utils"
 )
@@ -69,6 +71,34 @@ func DownloadLatestServerJar(destPath string) error {
 	err = utils.DownloadFile(serverJarUrl, "./minecraft-server/server.jar")
 	if err != nil {
 		return fmt.Errorf("failed to download server.jar: %s", err)
+	}
+
+	return nil
+}
+
+func PrepareServerFiles(serverDir string, configureProperties bool, requestProperties map[string]string) error {
+	if err := utils.WriteFile(filepath.Join(serverDir, "eula.txt"), []byte("EULA=true")); err != nil {
+		return err
+	}
+
+	// Create server.properties file content
+	// Default properties
+	properties := DefaultServerProperties
+
+	for k, v := range requestProperties {
+		properties[k] = v
+	}
+
+	var content strings.Builder
+	for k, v := range properties {
+		content.WriteString(fmt.Sprintf("%s=%s\n", k, v))
+	}
+
+	propertiesContent := []byte(content.String())
+	if configureProperties {
+		if err := utils.WriteFile(filepath.Join(serverDir, "server.properties"), propertiesContent); err != nil {
+			return err
+		}
 	}
 
 	return nil
