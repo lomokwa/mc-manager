@@ -59,3 +59,16 @@ var DefaultServerProperties = map[string]string{
 	"resource-pack-sha1":                "",
 	"max-world-size":                    "29999984",
 }
+
+const DefaultStartServerShellScript = `#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+java -Xms1G -Xmx2G -jar server.jar nogui
+`
+
+const DefaultStartServerBatchScript = `@echo off
+cd /d %~dp0
+java -Xms1G -Xmx2G -jar server.jar nogui
+pause
+`
