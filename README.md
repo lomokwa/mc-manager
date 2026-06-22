@@ -23,7 +23,7 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 
 # Current Tasks
 - [x] Implement server start functionality
-- [ ] Add server stop functionality
+- [x] Add server stop functionality
 - [ ] Add file upload/download capabilities
 - [ ] Add server configuration management
 - [ ] Add file management features
@@ -35,3 +35,5 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 
 # API Endpoints
 - `POST /api/start`: Start a Minecraft server.
+- `POST /api/stop`: Stop the Minecraft server.
+- `POST /api/status`: Check current running status of server.
