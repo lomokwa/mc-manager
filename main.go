@@ -11,8 +11,7 @@ func main() {
 	// Routes
 	r.POST("/api/start", handlers.StartServerHandler)
 	r.POST("/api/stop", handlers.StopServerHandler)
-	r.GET("/api/status", handlers.GetServerStatus)
-	// TODO: Add GET /api/status route to check if server is running
+	r.GET("/api/status", handlers.StatusHandler)
 
 	r.Run()
 }

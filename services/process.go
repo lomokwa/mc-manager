@@ -34,13 +34,6 @@ func StartServerProcess() (string, error) {
 	}
 	serverCmd = cmd
 
-	go func() {
-		cmd.Wait()
-		log.Printf("server process exited")
-		serverCmd = nil
-		serverStdin = nil
-	}()
-
 	log.Printf("start server command completed")
 	return "server started", nil
 }
@@ -51,7 +44,8 @@ func StopServerProcess() (string, error) {
 		return "", fmt.Errorf("server is not running")
 	}
 
- 	_, err := serverStdin.Write([]byte("stop\n")); err != nil {
+	_, err := serverStdin.Write([]byte("stop\n"))
+	if err != nil {
 		log.Printf("failed to send stop command: %v", err)
 		return "", fmt.Errorf("failed to send stop command: %w", err)
 	}
@@ -70,7 +64,7 @@ func StopServerProcess() (string, error) {
 
 	case <-time.After(30 * time.Second):
 		log.Printf("server did not stop in time, force killing")
-		serverCmd.Process.kill()
+		serverCmd.Process.Kill()
 		serverCmd = nil
 		serverStdin = nil
 		return "server force-killed after timeout", nil
