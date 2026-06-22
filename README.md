@@ -16,7 +16,7 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 
 2. Start the application using Docker Compose:
    ```bash
-   docker-compose up -d
+   docker compose up --build
    ```
 
 3. Access the API endpoints through `http://localhost:8080`.
@@ -34,4 +34,4 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 - [ ] Implement server backup functionality
 
 # API Endpoints
-- `POST /start`: Start a Minecraft server.
+- `POST /api/start`: Start a Minecraft server.
