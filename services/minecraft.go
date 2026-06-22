@@ -85,7 +85,7 @@ func DownloadLatestServerJar(destPath string) error {
 
 func PrepareServerFiles(serverDir string, createLaunchScript bool, configureProperties bool, requestProperties map[string]string) error {
 	log.Printf("preparing server files in %s", serverDir)
-	if err := utils.WriteFile(filepath.Join(serverDir, "eula.txt"), []byte("EULA=true")); err != nil {
+	if err := utils.WriteFile(filepath.Join(serverDir, "eula.txt"), []byte("eula=true")); err != nil {
 		return err
 	}
 

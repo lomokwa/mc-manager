@@ -1,10 +1,12 @@
 package services
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -28,14 +30,50 @@ func StartServerProcess() (string, error) {
 	}
 	serverStdin = stdin
 
+	stdout, _ := cmd.StdoutPipe()
+
 	if err := cmd.Start(); err != nil {
 		log.Printf("start server command failed: %v", err)
 		return "", fmt.Errorf("failed to start server: %w", err)
 	}
 	serverCmd = cmd
 
-	log.Printf("start server command completed")
-	return "server started", nil
+	scanner := bufio.NewScanner(stdout)
+	ready := make(chan string, 1)
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			log.Println(line)
+			if strings.Contains(line, "Done") {
+				ready <- line
+				return
+			}
+		}
+		if err := scanner.Err(); err != nil {
+			log.Printf("error reading server output: %v", err)
+		}
+		ready <- ""
+	}()
+
+	go func() {
+		err := cmd.Wait()
+		log.Printf("server process exited: %v", err)
+		serverCmd = nil
+		serverStdin = nil
+	}()
+
+	select {
+	case line := <-ready:
+		if line == "" {
+			return "", fmt.Errorf("server process exited before becoming ready")
+		}
+		return line, nil
+	case <-time.After(120 * time.Second):
+		cmd.Process.Kill()
+		serverCmd = nil
+		serverStdin = nil
+		return "", fmt.Errorf("server failed to start within 120 seconds")
+	}
 }
 
 func StopServerProcess() (string, error) {
