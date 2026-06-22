@@ -47,3 +47,17 @@ func StartServerHandler(c *gin.Context) {
 	log.Printf("server process started")
 	c.JSON(http.StatusOK, gin.H{"output": output})
 }
+
+func StopServerHandler(c *gin.Context) {
+	log.Printf("stop request received")
+
+	output, err := services.StopServerProcess()
+	if err != nil {
+		log.Printf("failed to stop server process: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	log.Printf("server process stopped")
+	c.JSON(http.StatusOK, gin.H{"output": output})
+}

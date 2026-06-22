@@ -10,7 +10,7 @@ func main() {
 
 	// Routes
 	r.POST("/api/start", handlers.StartServerHandler)
-	// TODO: Add POST /api/stop route using StopServerHandler
+	r.POST("/api/stop", handlers.StopServerHandler)
 	// TODO: Add GET /api/status route to check if server is running
 
 	r.Run()
