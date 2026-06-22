@@ -34,6 +34,7 @@ func StartServerHandler(c *gin.Context) {
 	if err := services.PrepareServerFiles("./minecraft-server", req.CreateLaunchScript, req.ConfigureProperties, req.Properties); err != nil {
 		log.Printf("failed to prepare server files: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	log.Printf("starting server process")
@@ -60,4 +61,9 @@ func StopServerHandler(c *gin.Context) {
 
 	log.Printf("server process stopped")
 	c.JSON(http.StatusOK, gin.H{"output": output})
+}
+
+func StatusHandler(c *gin.Context) {
+	log.Printf("status request received")
+	c.JSON(http.StatusOK, gin.H{"running": services.IsServerRunning()})
 }

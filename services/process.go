@@ -75,5 +75,8 @@ func StopServerProcess() (string, error) {
 		serverStdin = nil
 		return "server force-killed after timeout", nil
 	}
+}
 
+func IsServerRunning() bool {
+	return serverCmd != nil
 }
