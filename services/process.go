@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"time"
 )
 
 var (
@@ -44,18 +45,35 @@ func StartServerProcess() (string, error) {
 	return "server started", nil
 }
 
-// TODO: Send "stop" command to Minecraft stdin for graceful shutdown
-// TODO: Wait with timeout, then force-kill if process doesn't exit
-// TODO: Clear stored process handle/PID after stop
 func StopServerProcess() (string, error) {
 	log.Printf("executing stop server command")
-	cmd := exec.Command("echo", "Stopping server...")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("stop server command failed: %v", err)
-		return string(output), err
+	if serverCmd == nil || serverStdin == nil {
+		return "", fmt.Errorf("server is not running")
 	}
 
-	log.Printf("stop server command completed")
-	return string(output), err
+ 	_, err := serverStdin.Write([]byte("stop\n")); err != nil {
+		log.Printf("failed to send stop command: %v", err)
+		return "", fmt.Errorf("failed to send stop command: %w", err)
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- serverCmd.Wait()
+	}()
+
+	select {
+	case <-done:
+		log.Printf("server stopped gracefully")
+		serverCmd = nil
+		serverStdin = nil
+		return "server stopped", nil
+
+	case <-time.After(30 * time.Second):
+		log.Printf("server did not stop in time, force killing")
+		serverCmd.Process.kill()
+		serverCmd = nil
+		serverStdin = nil
+		return "server force-killed after timeout", nil
+	}
+
 }
