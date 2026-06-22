@@ -9,7 +9,9 @@ func main() {
 	r := gin.Default()
 
 	// Routes
-	r.POST("/start", handlers.StartServerHandler)
+	r.POST("/api/start", handlers.StartServerHandler)
+	r.POST("/api/stop", handlers.StopServerHandler)
+	r.GET("/api/status", handlers.StatusHandler)
 
 	r.Run()
 }

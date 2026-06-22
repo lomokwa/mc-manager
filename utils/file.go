@@ -35,3 +35,16 @@ func DownloadFile(url, filePath string) error {
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
+
+func WriteFile(filePath string, fileContent []byte) error {
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	if err := os.WriteFile(filePath, fileContent, 0644); err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filePath, err)
+	}
+
+	return nil
+}
