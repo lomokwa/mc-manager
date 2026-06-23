@@ -33,7 +33,10 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 - [ ] Add user authentication and authorization
 - [ ] Implement server backup functionality
 
-# API Endpoints
-- `POST /api/start`: Start a Minecraft server.
-- `POST /api/stop`: Stop the Minecraft server.
-- `POST /api/status`: Check current running status of server.
+# Docs
+API documentation is served via Swagger UI at `http://localhost:8080/swagger/index.html`.
+
+Docs are generated from comment annotations on handlers using [swaggo](https://github.com/swaggo/swag). To regenerate after editing annotations:
+```bash
+swag init
+```

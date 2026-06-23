@@ -25,11 +25,14 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Install Air for hot reload
+RUN curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s -- -b /usr/local/bin
+
 # Copy rest of code
 COPY . .
 
-# Build go app
-RUN go build -o server .
+# Generate swagger docs and build go app
+RUN go generate ./... && go build -o server .
 
 # Expose ports
 EXPOSE 8080 25565

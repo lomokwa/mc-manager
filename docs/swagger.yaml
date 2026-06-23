@@ -1,0 +1,88 @@
+basePath: /
+definitions:
+  types.StartServerRequest:
+    properties:
+      configureProperties:
+        type: boolean
+      createLaunchScript:
+        type: boolean
+      properties:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing a Minecraft server
+  title: MC Manager API
+  version: "1.0"
+paths:
+  /api/start:
+    post:
+      consumes:
+      - application/json
+      description: Downloads the server jar if needed, prepares server files, and
+        starts the process
+      parameters:
+      - description: Server configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.StartServerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Start the Minecraft server
+      tags:
+      - server
+  /api/status:
+    get:
+      description: Returns whether the Minecraft server is currently running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get server status
+      tags:
+      - server
+  /api/stop:
+    post:
+      description: Stops the running Minecraft server process
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Stop the Minecraft server
+      tags:
+      - server
+swagger: "2.0"
