@@ -10,6 +10,16 @@ import (
 	"github.com/lomokwa/mc-manager/utils"
 )
 
+// @Summary Start the Minecraft server
+// @Description Downloads the server jar if needed, prepares server files, and starts the process
+// @Tags server
+// @Accept json
+// @Produce json
+// @Param request body types.StartServerRequest true "Server configuration"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/start [post]
 func StartServerHandler(c *gin.Context) {
 	log.Printf("start request received")
 
@@ -49,6 +59,13 @@ func StartServerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "output": output})
 }
 
+// @Summary Stop the Minecraft server
+// @Description Stops the running Minecraft server process
+// @Tags server
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /api/stop [post]
 func StopServerHandler(c *gin.Context) {
 	log.Printf("stop request received")
 
@@ -63,6 +80,12 @@ func StopServerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"output": output})
 }
 
+// @Summary Get server status
+// @Description Returns whether the Minecraft server is currently running
+// @Tags server
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /api/status [get]
 func StatusHandler(c *gin.Context) {
 	log.Printf("status request received")
 	c.JSON(http.StatusOK, gin.H{"running": services.IsServerRunning()})
