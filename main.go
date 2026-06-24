@@ -37,6 +37,11 @@ func main() {
 	api := r.Group("/api", middleware.ValidateAPIKey())
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
+
+	// Console WebSocket
+	api.GET("/console", handlers.ConsoleHandler)
+
+	// Server Health check
 	api.GET("/status", handlers.StatusHandler)
 
 	// Serve API Docs
