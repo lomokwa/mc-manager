@@ -32,6 +32,7 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 - [ ] Implement server monitoring features
 - [ ] Add user authentication and authorization
 - [ ] Implement server backup functionality
+- [ ] become rich and sucessful and never look back to the ones that got me there 
 
 # Docs
 API documentation is served via Swagger UI at `http://localhost:8080/swagger/index.html`.
