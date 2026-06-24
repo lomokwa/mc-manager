@@ -1,5 +1,5 @@
 # Use official go image
-FROM golang:1.23
+FROM golang:1.25
 
 # Install Java 25 (required by latest Minecraft server jar)
 RUN apt-get update && apt-get install -y wget && \
