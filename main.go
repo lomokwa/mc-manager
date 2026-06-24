@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lomokwa/mc-manager/handlers"
@@ -28,15 +29,30 @@ func main() {
 
 	r := gin.Default()
 
+	// Cors config
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "X-API-Key"},
+		AllowCredentials: true,
+	}))
+
 	// Rate limiter: 10 requests/sec, burst of 20
 	limiter := middleware.NewRateLimiter(10, 20)
 	r.Use(limiter.Middleware())
+
+	// API Auth Key Validator
 	r.Use(middleware.ValidateAPIKey())
 
 	// Routes
 	api := r.Group("/api", middleware.ValidateAPIKey())
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
+
+	// Console WebSocket
+	api.GET("/console", handlers.ConsoleHandler)
+
+	// Server Health check
 	api.GET("/status", handlers.StatusHandler)
 
 	// Serve API Docs

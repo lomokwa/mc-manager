@@ -7,12 +7,17 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/lomokwa/mc-manager/types"
 )
 
 var (
 	serverCmd   *exec.Cmd
 	serverStdin io.WriteCloser
+	logHub      *types.LogHub
+	stdinMu     sync.Mutex
 )
 
 func StartServerProcess() (string, error) {
@@ -38,15 +43,17 @@ func StartServerProcess() (string, error) {
 	}
 	serverCmd = cmd
 
+	logHub = types.NewLogHub()
+
 	scanner := bufio.NewScanner(stdout)
 	ready := make(chan string, 1)
 	go func() {
 		for scanner.Scan() {
 			line := scanner.Text()
 			log.Println(line)
+			logHub.Broadcast(line)
 			if strings.Contains(line, "Done") {
 				ready <- line
-				return
 			}
 		}
 		if err := scanner.Err(); err != nil {
@@ -58,8 +65,12 @@ func StartServerProcess() (string, error) {
 	go func() {
 		err := cmd.Wait()
 		log.Printf("server process exited: %v", err)
+		if logHub != nil {
+			logHub.Close()
+		}
 		serverCmd = nil
 		serverStdin = nil
+		logHub = nil
 	}()
 
 	select {
@@ -82,8 +93,7 @@ func StopServerProcess() (string, error) {
 		return "", fmt.Errorf("server is not running")
 	}
 
-	_, err := serverStdin.Write([]byte("stop\n"))
-	if err != nil {
+	if err := SendCommand("stop"); err != nil {
 		log.Printf("failed to send stop command: %v", err)
 		return "", fmt.Errorf("failed to send stop command: %w", err)
 	}
@@ -111,4 +121,18 @@ func StopServerProcess() (string, error) {
 
 func IsServerRunning() bool {
 	return serverCmd != nil
+}
+
+func SendCommand(cmd string) error {
+	stdinMu.Lock()
+	defer stdinMu.Unlock()
+	if serverStdin == nil {
+		return fmt.Errorf("server is not running")
+	}
+	_, err := serverStdin.Write([]byte(cmd + "\n"))
+	return err
+}
+
+func GetLogHub() *types.LogHub {
+	return logHub
 }

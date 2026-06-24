@@ -11,6 +11,9 @@ import (
 func ValidateAPIKey() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		apiKey := c.Request.Header.Get("X-API-Key")
+		if apiKey == "" {
+			apiKey = c.Query("key")
+		}
 
 		if apiKey == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, types.APIResponse{Error: "missing API key"})
