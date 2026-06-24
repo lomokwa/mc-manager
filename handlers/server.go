@@ -25,7 +25,7 @@ func StartServerHandler(c *gin.Context) {
 
 	var req types.StartServerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "invalid request body"})
 		return
 	}
 
@@ -34,7 +34,7 @@ func StartServerHandler(c *gin.Context) {
 		err := services.DownloadLatestServerJar("./minecraft-server/server.jar")
 		if err != nil {
 			log.Printf("failed to download server.jar: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
 			return
 		}
 		log.Printf("server.jar downloaded successfully")
@@ -43,7 +43,7 @@ func StartServerHandler(c *gin.Context) {
 	log.Printf("creating server files")
 	if err := services.PrepareServerFiles("./minecraft-server", req.CreateLaunchScript, req.ConfigureProperties, req.Properties); err != nil {
 		log.Printf("failed to prepare server files: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
 		return
 	}
 
@@ -51,12 +51,12 @@ func StartServerHandler(c *gin.Context) {
 	output, err := services.StartServerProcess()
 	if err != nil {
 		log.Printf("failed to start server process: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: err.Error()})
 		return
 	}
 
 	log.Printf("server process started")
-	c.JSON(http.StatusOK, gin.H{"success": true, "output": output})
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: output})
 }
 
 // @Summary Stop the Minecraft server
@@ -72,12 +72,12 @@ func StopServerHandler(c *gin.Context) {
 	output, err := services.StopServerProcess()
 	if err != nil {
 		log.Printf("failed to stop server process: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: err.Error()})
 		return
 	}
 
 	log.Printf("server process stopped")
-	c.JSON(http.StatusOK, gin.H{"output": output})
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: output})
 }
 
 // @Summary Get server status
@@ -88,5 +88,5 @@ func StopServerHandler(c *gin.Context) {
 // @Router /api/status [get]
 func StatusHandler(c *gin.Context) {
 	log.Printf("status request received")
-	c.JSON(http.StatusOK, gin.H{"running": services.IsServerRunning()})
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: gin.H{"running": services.IsServerRunning()}})
 }
