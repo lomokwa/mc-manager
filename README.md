@@ -32,7 +32,8 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 - [ ] Implement server monitoring features
 - [ ] Add user authentication and authorization
 - [ ] Implement server backup functionality
-
+- [ ] Add a minimal "lobby" server that users are redirected to when the server gets shutdown / restarted
+ 
 # Docs
 API documentation is served via Swagger UI at `http://localhost:8080/swagger/index.html`.
 
