@@ -15,6 +15,55 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/properties": {
+            "patch": {
+                "description": "Merges the provided key/values into server.properties (falling back to defaults for keys not set yet) and writes the file. Takes effect on the next server start.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Update server properties",
+                "parameters": [
+                    {
+                        "description": "Properties to update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.UpdateServerPropertiesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/start": {
             "post": {
                 "description": "Downloads the server jar if needed, prepares server files, and starts the process",
@@ -124,6 +173,17 @@ const docTemplate = `{
                 "createLaunchScript": {
                     "type": "boolean"
                 },
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "types.UpdateServerPropertiesRequest": {
+            "type": "object",
+            "properties": {
                 "properties": {
                     "type": "object",
                     "additionalProperties": {
