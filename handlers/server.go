@@ -90,15 +90,3 @@ func StatusHandler(c *gin.Context) {
 	log.Printf("status request received")
 	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: gin.H{"running": services.IsServerRunning()}})
 }
-
-func ListPlayersHandler(c *gin.Context) {
-	log.Printf("list players request received")
-	players, err := services.ListPlayers()
-	if err != nil {
-		log.Printf("failed to list players: %v", err)
-		c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: players})
-}
