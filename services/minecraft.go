@@ -75,7 +75,7 @@ func DownloadLatestServerJar(destPath string) error {
 	serverJarUrl := versionDetails.Downloads.Server.URL
 
 	log.Printf("downloading server jar to %s", destPath)
-	err = utils.DownloadFile(serverJarUrl, "./minecraft-server/server.jar")
+	err = utils.DownloadFile(serverJarUrl, destPath)
 	if err != nil {
 		return fmt.Errorf("failed to download server.jar: %s", err)
 	}
