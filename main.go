@@ -49,6 +49,7 @@ func main() {
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
+	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
 
 	// Console WebSocket
 	api.GET("/console", handlers.ConsoleHandler)
