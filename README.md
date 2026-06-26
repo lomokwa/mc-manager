@@ -26,6 +26,8 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 Configuration comes from environment variables, loaded from a `.env` file if one is present (see [`.env.example`](.env.example)).
 
 - **`API_KEY`** (required) — shared secret that must accompany every `/api/*` request. If it is empty or unset the server still starts, but all `/api/*` requests are rejected with `401`.
+- **`CORS_ALLOWED_ORIGINS`** (optional) — comma-separated list of browser origins allowed by CORS. Defaults to `http://localhost:5173,http://localhost:8080` (the Vite dev server and the API host).
+- **`PORT`** (optional) — port the HTTP server listens on. Defaults to `8080`.
 
 ### Authenticating requests
 

@@ -5,6 +5,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -31,7 +33,7 @@ func main() {
 
 	// Cors config
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173", "https://calm-octopus-heavily.ngrok-free.app", "https://ed29-2603-3020-2474-eb00-6427-a4cf-ffb8-aedd.ngrok-free.app"},
+		AllowOrigins:     allowedOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "X-API-Key", "ngrok-skip-browser-warning"},
 		AllowCredentials: true,
@@ -64,4 +66,23 @@ func main() {
 	})
 
 	r.Run()
+}
+
+// allowedOrigins returns the CORS allow-list. It reads a comma-separated
+// CORS_ALLOWED_ORIGINS env var and falls back to the local dev origins
+// (the Vite dev server and the API host) when it is unset.
+func allowedOrigins() []string {
+	raw := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if strings.TrimSpace(raw) == "" {
+		return []string{"http://localhost:5173", "http://localhost:8080"}
+	}
+
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if o := strings.TrimSpace(p); o != "" {
+			origins = append(origins, o)
+		}
+	}
+	return origins
 }
