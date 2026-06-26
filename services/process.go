@@ -14,14 +14,22 @@ import (
 )
 
 var (
+	// mu guards the server process state below. Hold it (read or write) when
+	// touching serverCmd, serverStdin, logHub or serverDone.
+	mu          sync.RWMutex
 	serverCmd   *exec.Cmd
 	serverStdin io.WriteCloser
 	logHub      *types.LogHub
-	stdinMu     sync.Mutex
+	serverDone  chan struct{} // closed once the process has exited and state is cleared
+
+	// stdinMu serializes concurrent writes to the server's stdin.
+	stdinMu sync.Mutex
 )
 
 func StartServerProcess() (string, error) {
+	mu.Lock()
 	if serverCmd != nil {
+		mu.Unlock()
 		return "", fmt.Errorf("server already running")
 	}
 
@@ -31,46 +39,68 @@ func StartServerProcess() (string, error) {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
+		mu.Unlock()
 		return "", fmt.Errorf("failed to create stdin pipe: %w", err)
 	}
-	serverStdin = stdin
 
-	stdout, _ := cmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		mu.Unlock()
+		return "", fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
 
 	if err := cmd.Start(); err != nil {
+		mu.Unlock()
 		log.Printf("start server command failed: %v", err)
 		return "", fmt.Errorf("failed to start server: %w", err)
 	}
+
+	hub := types.NewLogHub()
+	done := make(chan struct{})
 	serverCmd = cmd
+	serverStdin = stdin
+	logHub = hub
+	serverDone = done
+	mu.Unlock()
 
-	logHub = types.NewLogHub()
-
-	scanner := bufio.NewScanner(stdout)
+	// Pump stdout into the log hub and detect readiness.
 	ready := make(chan string, 1)
 	go func() {
+		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			line := scanner.Text()
 			log.Println(line)
-			logHub.Broadcast(line)
+			hub.Broadcast(line)
 			if strings.Contains(line, "Done") {
-				ready <- line
+				// Non-blocking: never stall the log pump waiting on a reader.
+				select {
+				case ready <- line:
+				default:
+				}
 			}
 		}
 		if err := scanner.Err(); err != nil {
 			log.Printf("error reading server output: %v", err)
 		}
-		ready <- ""
+		select {
+		case ready <- "":
+		default:
+		}
 	}()
 
+	// Reap the process and clear shared state exactly once. This is the only
+	// place that calls cmd.Wait(), so callers observe the exit via serverDone.
 	go func() {
-		err := cmd.Wait()
-		log.Printf("server process exited: %v", err)
-		if logHub != nil {
-			logHub.Close()
-		}
+		waitErr := cmd.Wait()
+		log.Printf("server process exited: %v", waitErr)
+		mu.Lock()
+		hub.Close()
 		serverCmd = nil
 		serverStdin = nil
 		logHub = nil
+		serverDone = nil
+		mu.Unlock()
+		close(done)
 	}()
 
 	select {
@@ -80,16 +110,20 @@ func StartServerProcess() (string, error) {
 		}
 		return line, nil
 	case <-time.After(120 * time.Second):
+		// Kill and let the reaper goroutine clean up shared state.
 		cmd.Process.Kill()
-		serverCmd = nil
-		serverStdin = nil
 		return "", fmt.Errorf("server failed to start within 120 seconds")
 	}
 }
 
 func StopServerProcess() (string, error) {
 	log.Printf("executing stop server command")
-	if serverCmd == nil || serverStdin == nil {
+
+	mu.RLock()
+	cmd := serverCmd
+	done := serverDone
+	mu.RUnlock()
+	if cmd == nil || done == nil {
 		return "", fmt.Errorf("server is not running")
 	}
 
@@ -98,41 +132,41 @@ func StopServerProcess() (string, error) {
 		return "", fmt.Errorf("failed to send stop command: %w", err)
 	}
 
-	done := make(chan error, 1)
-	go func() {
-		done <- serverCmd.Wait()
-	}()
-
 	select {
 	case <-done:
 		log.Printf("server stopped gracefully")
-		serverCmd = nil
-		serverStdin = nil
 		return "server stopped", nil
 
 	case <-time.After(30 * time.Second):
 		log.Printf("server did not stop in time, force killing")
-		serverCmd.Process.Kill()
-		serverCmd = nil
-		serverStdin = nil
+		cmd.Process.Kill()
+		<-done // wait for the reaper to finish clearing state
 		return "server force-killed after timeout", nil
 	}
 }
 
 func IsServerRunning() bool {
+	mu.RLock()
+	defer mu.RUnlock()
 	return serverCmd != nil
 }
 
 func SendCommand(cmd string) error {
-	stdinMu.Lock()
-	defer stdinMu.Unlock()
-	if serverStdin == nil {
+	mu.RLock()
+	w := serverStdin
+	mu.RUnlock()
+	if w == nil {
 		return fmt.Errorf("server is not running")
 	}
-	_, err := serverStdin.Write([]byte(cmd + "\n"))
+
+	stdinMu.Lock()
+	defer stdinMu.Unlock()
+	_, err := w.Write([]byte(cmd + "\n"))
 	return err
 }
 
 func GetLogHub() *types.LogHub {
+	mu.RLock()
+	defer mu.RUnlock()
 	return logHub
 }
