@@ -9,6 +9,55 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
+        "/api/logs": {
+            "get": {
+                "description": "Returns the most recent buffered console output (oldest line first, up to the replay buffer size). Empty when the server is not running. For a live stream use the /api/console WebSocket.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Get recent server logs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/players": {
+            "get": {
+                "description": "Returns known players from the server's usercache, each annotated with op / banned / whitelisted / online status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "List players",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/start": {
             "post": {
                 "description": "Downloads the server jar if needed, prepares server files, and starts the process",
