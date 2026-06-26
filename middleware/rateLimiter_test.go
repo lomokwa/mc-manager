@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lomokwa/mc-manager/types"
@@ -87,5 +88,35 @@ func TestRateLimiter_DifferentIPsIndependent(t *testing.T) {
 
 	if w2.Code != http.StatusOK {
 		t.Errorf("second IP: expected 200, got %d", w2.Code)
+	}
+}
+
+func TestRateLimiter_EvictsStaleClients(t *testing.T) {
+	rl := NewRateLimiter(10, 5)
+
+	// A fresh, active client.
+	rl.allow("fresh")
+
+	// An old client that hasn't been seen in longer than the TTL.
+	rl.mu.Lock()
+	rl.clients["stale"] = &client{tokens: rl.maxBurst, lastCheck: time.Now().Add(-rl.ttl - time.Minute)}
+	rl.mu.Unlock()
+
+	rl.cleanup(time.Now().Add(-rl.ttl))
+
+	rl.mu.Lock()
+	_, freshKept := rl.clients["fresh"]
+	_, staleKept := rl.clients["stale"]
+	remaining := len(rl.clients)
+	rl.mu.Unlock()
+
+	if !freshKept {
+		t.Error("fresh client should be kept")
+	}
+	if staleKept {
+		t.Error("stale client should be evicted")
+	}
+	if remaining != 1 {
+		t.Errorf("expected 1 client remaining, got %d", remaining)
 	}
 }
