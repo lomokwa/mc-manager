@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/lomokwa/mc-manager/types"
 	"github.com/lomokwa/mc-manager/utils"
 )
 
@@ -133,4 +135,131 @@ func PrepareServerFiles(serverDir string, createLaunchScript bool, configureProp
 	log.Printf("server file preparation complete")
 
 	return nil
+}
+
+func loadUUIDs(filename string) (map[string]bool, error) {
+	data, err := os.ReadFile(filepath.Join(ServerDir, filename))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return make(map[string]bool), nil
+		}
+		return nil, err
+	}
+
+	var entries []struct {
+		UUID string `json:"uuid"`
+	}
+	if err := json.Unmarshal(data, &entries); err != nil {
+		return nil, fmt.Errorf("failed to decode %s: %w", filename, err)
+	}
+
+	set := make(map[string]bool, len(entries))
+	for _, e := range entries {
+		set[e.UUID] = true
+	}
+
+	return set, nil
+}
+
+func GetOnlinePlayers() ([]string, error) {
+	hub := GetLogHub()
+	if hub == nil {
+		return nil, fmt.Errorf("log hub not available")
+	}
+
+	ch := hub.Subscribe()
+	defer hub.Unsubscribe(ch)
+
+draining:
+	for {
+		select {
+		case <-ch:
+		default:
+			break draining
+		}
+	}
+
+	if err := SendCommand("list"); err != nil {
+		return nil, err
+	}
+
+	for {
+		select {
+		case line := <-ch:
+			if strings.Contains(line, "players online:") {
+				parts := strings.SplitN(line, "players online: ", 2)
+
+				if len(parts) < 2 || parts[1] == "" {
+					return []string{}, nil
+				}
+
+				names := strings.Split(parts[1], ", ")
+				for i := range names {
+					names[i] = strings.TrimSpace(names[i])
+				}
+
+				return names, nil
+			}
+
+		case <-time.After(5 * time.Second):
+			return nil, fmt.Errorf("timed out waiting for player list")
+		}
+	}
+}
+
+func ListPlayers() ([]types.Player, error) {
+	data, err := os.ReadFile(filepath.Join(ServerDir, "usercache.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	var userCache []types.UserCacheEntry
+	if err := json.Unmarshal(data, &userCache); err != nil {
+		return nil, fmt.Errorf("failed to decode usercache.json: %w", err)
+	}
+
+	// Load status set
+	opSet, err := loadUUIDs("ops.json")
+	if err != nil {
+		return nil, err
+	}
+
+	whitelistSet, err := loadUUIDs("whitelist.json")
+	if err != nil {
+		return nil, err
+	}
+
+	bannedSet, err := loadUUIDs("banned-players.json")
+	if err != nil {
+		return nil, err
+	}
+
+	// Get online players
+	onlineSet := make(map[string]bool)
+	if IsServerRunning() {
+		names, err := GetOnlinePlayers()
+		if err != nil {
+			log.Printf("could not find online players")
+			for _, n := range names {
+				onlineSet[n] = false
+			}
+		} else {
+			for _, name := range names {
+				onlineSet[name] = true
+			}
+		}
+	}
+
+	players := make([]types.Player, 0, len(userCache))
+	for _, u := range userCache {
+		players = append(players, types.Player{
+			UUID:          u.UUID,
+			Name:          u.Name,
+			Online:        onlineSet[u.Name],
+			IsOp:          opSet[u.UUID],
+			IsBanned:      bannedSet[u.UUID],
+			IsWhitelisted: whitelistSet[u.UUID],
+		})
+	}
+	return players, nil
 }
