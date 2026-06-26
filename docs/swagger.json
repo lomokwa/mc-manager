@@ -10,6 +10,32 @@
     "basePath": "/",
     "paths": {
         "/api/properties": {
+            "get": {
+                "description": "Returns the effective server.properties — the defaults overlaid with the current file's values.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Get server properties",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
             "patch": {
                 "description": "Merges the provided key/values into server.properties (falling back to defaults for keys not set yet) and writes the file. Takes effect on the next server start.",
                 "consumes": [

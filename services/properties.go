@@ -67,3 +67,21 @@ func UpdateServerProperties(properties map[string]string) error {
 	}
 	return nil
 }
+
+// GetServerProperties returns the effective server.properties: the defaults
+// overlaid with whatever is currently in the file (if any).
+func GetServerProperties() (map[string]string, error) {
+	merged := make(map[string]string, len(DefaultServerProperties))
+	for k, v := range DefaultServerProperties {
+		merged[k] = v
+	}
+
+	existing, err := readServerProperties(filepath.Join(ServerDir, "server.properties"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read server.properties: %w", err)
+	}
+	for k, v := range existing {
+		merged[k] = v
+	}
+	return merged, nil
+}

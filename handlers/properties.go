@@ -37,3 +37,20 @@ func UpdateServerPropertiesHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: gin.H{"updated": len(req.Properties)}})
 }
+
+// @Summary Get server properties
+// @Description Returns the effective server.properties — the defaults overlaid with the current file's values.
+// @Tags server
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/properties [get]
+func GetServerPropertiesHandler(c *gin.Context) {
+	props, err := services.GetServerProperties()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: props})
+}

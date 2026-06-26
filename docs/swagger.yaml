@@ -26,6 +26,25 @@ info:
   version: "1.0"
 paths:
   /api/properties:
+    get:
+      description: Returns the effective server.properties — the defaults overlaid
+        with the current file's values.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get server properties
+      tags:
+      - server
     patch:
       consumes:
       - application/json
