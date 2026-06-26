@@ -2,11 +2,15 @@ package db
 
 import (
 	"database/sql"
+	_ "embed"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var DB *sql.DB
+
+//go:embed migrations.sql
+var migrations string
 
 func Init(path string) error {
 	var err error
@@ -18,23 +22,6 @@ func Init(path string) error {
 }
 
 func migrate() error {
-	_, err := DB.Exec(`
-		CREATE TABLE IF NOT EXISTS users (
-    	id INTEGER PRIMARY KEY AUTOINCREMENT,
-    	username VARCHAR(50) UNIQUE NOT NULL,
-    	email VARCHAR(255) UNIQUE,
-    	password_hash VARCHAR(255) NOT NULL,
-    	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		);
-		CREATE TABLE IF NOT EXISTS invitations (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			token VARCHAR(64) UNIQUE NOT NULL,
-			email VARCHAR(255),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			expires_at TIMESTAMP NOT NULL,
-			used_at TIMESTAMP
-		);
-	`)
-
+	_, err := DB.Exec(migrations)
 	return err
 }
