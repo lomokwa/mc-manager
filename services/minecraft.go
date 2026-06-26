@@ -87,6 +87,16 @@ func DownloadLatestServerJar(destPath string) error {
 
 func PrepareServerFiles(serverDir string, createLaunchScript bool, configureProperties bool, requestProperties map[string]string) error {
 	log.Printf("preparing server files in %s", serverDir)
+
+	// Reject control characters in caller-supplied properties before writing
+	// anything: a newline in a key or value would inject extra
+	// server.properties lines (e.g. enabling RCON or setting a resource pack).
+	for k, v := range requestProperties {
+		if strings.ContainsAny(k, "\r\n") || strings.ContainsAny(v, "\r\n") {
+			return fmt.Errorf("invalid server property %q: keys and values must not contain newlines", k)
+		}
+	}
+
 	if err := utils.WriteFile(filepath.Join(serverDir, "eula.txt"), []byte("eula=true")); err != nil {
 		return err
 	}
