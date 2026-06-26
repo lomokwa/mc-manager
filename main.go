@@ -31,9 +31,9 @@ func main() {
 
 	// Cors config
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:8080", "http://localhost:5173", "https://calm-octopus-heavily.ngrok-free.app", "https://ed29-2603-3020-2474-eb00-6427-a4cf-ffb8-aedd.ngrok-free.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "X-API-Key"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "X-API-Key", "ngrok-skip-browser-warning"},
 		AllowCredentials: true,
 	}))
 
