@@ -21,6 +21,24 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 
 3. Access the API endpoints through `http://localhost:8080`.
 
+## Configuration
+
+Configuration comes from environment variables, loaded from a `.env` file if one is present (see [`.env.example`](.env.example)).
+
+- **`API_KEY`** (required) — shared secret that must accompany every `/api/*` request. If it is empty or unset the server still starts, but all `/api/*` requests are rejected with `401`.
+
+### Authenticating requests
+
+Send the key on every `/api/*` request, either as a header or a query parameter:
+
+```bash
+curl -H "X-API-Key: $API_KEY" http://localhost:8080/api/status
+# or
+curl "http://localhost:8080/api/status?key=$API_KEY"
+```
+
+The Swagger UI is public and does not require the key.
+
 # Current Tasks
 - [x] Implement server start functionality
 - [x] Add server stop functionality
@@ -35,7 +53,7 @@ Web interface not yet implemented. Will be added once the API is in a reasonably
 - [ ] Add a minimal "lobby" server that users are redirected to when the server gets shutdown / restarted
  
 # Docs
-API documentation is served via Swagger UI at `http://localhost:8080/swagger/index.html`.
+API documentation is served via Swagger UI at `http://localhost:8080/api/docs/index.html`.
 
 Docs are generated from comment annotations on handlers using [swaggo](https://github.com/swaggo/swag). To regenerate after editing annotations:
 ```bash
