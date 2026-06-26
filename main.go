@@ -41,10 +41,8 @@ func main() {
 	limiter := middleware.NewRateLimiter(10, 20)
 	r.Use(limiter.Middleware())
 
-	// API Auth Key Validator
-	r.Use(middleware.ValidateAPIKey())
-
-	// Routes
+	// Protected API routes — every /api/* endpoint requires a valid X-API-Key.
+	// Auth is applied to this group only, so the Swagger UI below stays public.
 	api := r.Group("/api", middleware.ValidateAPIKey())
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
