@@ -1,60 +1,111 @@
 # MC Manager
-MC Manager is a tool for managing Minecraft servers, built with my homelab in mind. It allows you to easily create, manage, and monitor minecraft servers from a web interface or command line.
-
-Web interface not yet implemented. Will be added once the API is in a reasonably ready state.
+MC Manager is a tool for managing Minecraft servers, built with my homelab in mind. It allows you to easily create, manage, and monitor minecraft servers from a web interface.
 
 ## Tech Requirements / Stack
-- Go 1.23+
-- Docker
+- Go 1.25+
+- Docker & Docker Compose
+- Java 25 (provided by the Docker image)
 
 ## Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/lomokwa/mc-manager.git
-   cd mc-manager
+   cd mc-manager/mc-manager-server
    ```
 
-2. Start the application using Docker Compose:
+2. Copy the example environment file and fill in values:
+   ```bash
+   cp .env.example .env
+   ```
+
+   At minimum, set `API_KEY`, `JWT_SECRET`, and `DB_PATH`.
+
+3. Start the application using Docker Compose:
    ```bash
    docker compose up --build
    ```
 
-3. Access the API endpoints through `http://localhost:8080`.
+4. Access the API at `http://localhost:8080` and the frontend at `http://localhost:5173`.
 
-## Configuration
+## Docker
 
-Configuration comes from environment variables, loaded from a `.env` file if one is present (see [`.env.example`](.env.example)).
-
-- **`API_KEY`** (required) — shared secret that must accompany every `/api/*` request. If it is empty or unset the server still starts, but all `/api/*` requests are rejected with `401`.
-- **`CORS_ALLOWED_ORIGINS`** (optional) — comma-separated list of browser origins allowed by CORS. Defaults to `http://localhost:5173,http://localhost:8080` (the Vite dev server and the API host).
-- **`PORT`** (optional) — port the HTTP server listens on. Defaults to `8080`.
-
-### Authenticating requests
-
-Send the key on every `/api/*` request, either as a header or a query parameter:
+### Production
 
 ```bash
-curl -H "X-API-Key: $API_KEY" http://localhost:8080/api/status
-# or
-curl "http://localhost:8080/api/status?key=$API_KEY"
+docker compose up --build -d
 ```
 
-The Swagger UI is public and does not require the key.
+This builds the image from the `Dockerfile`, which:
+- Installs Go 1.25 and Java 25
+- Downloads Go dependencies
+- Generates Swagger docs and compiles the binary
+- Exposes ports `8080` (API) and `25565` (Minecraft)
 
-# Current Tasks
+The `minecraft-server/` directory is mounted as a volume so world data persists across container restarts.
+
+### Development (with hot-reload)
+
+```bash
+docker compose up
+```
+
+The `docker-compose.override.yml` automatically activates in development and:
+- Mounts the entire project directory into the container
+- Replaces the production `CMD` with [Air](https://github.com/air-verse/air) for hot-reload
+- Any code change triggers an automatic rebuild
+
+### Volumes
+
+| Host path | Container path | Purpose |
+|---|---|---|
+| `./minecraft-server` | `/app/minecraft-server` | Minecraft world data, configs, JARs |
+| `.` (dev only) | `/app` | Full source for hot-reload |
+
+### Ports
+
+| Port | Service |
+|---|---|
+| `8080` | Go API server |
+| `25565` | Minecraft server |
+
+### Environment Variables
+
+See [`.env.example`](.env.example) for all available options.
+
+| Variable | Required | Description |
+|---|---|---|
+| `API_KEY` | Yes | Secret for admin endpoints (`/api/admin/*`) |
+| `JWT_SECRET` | Yes | Secret for signing JWT tokens |
+| `DB_PATH` | Yes | Path to SQLite database file |
+| `CLIENT_URL` | No | Frontend URL for invitation links (default: `http://localhost:5173`) |
+| `CORS_ALLOWED_ORIGINS` | No | Comma-separated allowed origins |
+| `PORT` | No | API listen port (default: `8080`) |
+
+## Authentication
+
+MC Manager uses **invitation-based registration** with JWT authentication. See [INVITATION_AUTH.md](INVITATION_AUTH.md) for the full registration flow.
+
+**Quick summary:**
+1. Admin creates an invitation → gets a link
+2. User opens the link → registers with username + password
+3. User logs in → receives a JWT
+4. JWT is sent on all API requests via `Authorization: Bearer <token>`
+
+## Current Tasks
 - [x] Implement server start functionality
 - [x] Add server stop functionality
+- [x] Add user authentication and authorization
 - [ ] Add file upload/download capabilities
 - [ ] Add server configuration management
 - [ ] Add file management features
 - [ ] Implement server logs viewing
 - [ ] Add server status monitoring
 - [ ] Implement server monitoring features
-- [ ] Add user authentication and authorization
 - [ ] Implement server backup functionality
 - [ ] Add a minimal "lobby" server that users are redirected to when the server gets shutdown / restarted
  
-# Docs
+## API Docs
 API documentation is served via Swagger UI at `http://localhost:8080/api/docs/index.html`.
 
 Docs are generated from comment annotations on handlers using [swaggo](https://github.com/swaggo/swag). To regenerate after editing annotations:
