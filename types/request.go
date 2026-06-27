@@ -9,3 +9,14 @@ type StartServerRequest struct {
 type UpdateServerPropertiesRequest struct {
 	Properties map[string]string `json:"properties"`
 }
+
+type RegisterRequest struct {
+	Token    string `json:"token" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}

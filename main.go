@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/lomokwa/mc-manager/db"
 	"github.com/lomokwa/mc-manager/handlers"
 	"github.com/lomokwa/mc-manager/middleware"
 	swaggerFiles "github.com/swaggo/files"
@@ -29,13 +30,16 @@ func main() {
 		log.Println("no .env file found, using system environment")
 	}
 
+	// Initialize database
+	db.Init(os.Getenv("DB_PATH"))
+
 	r := gin.Default()
 
 	// Cors config
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "X-API-Key", "ngrok-skip-browser-warning"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key", "ngrok-skip-browser-warning"},
 		AllowCredentials: true,
 	}))
 
@@ -43,13 +47,21 @@ func main() {
 	limiter := middleware.NewRateLimiter(10, 20)
 	r.Use(limiter.Middleware())
 
-	// Protected API routes — every /api/* endpoint requires a valid X-API-Key.
-	// Auth is applied to this group only, so the Swagger UI below stays public.
-	api := r.Group("/api", middleware.ValidateAPIKey())
+	// JWT Routes
+	api := r.Group("/api", middleware.ValidateJWT())
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
+
+	// Admin Routes (API key)
+	admin := r.Group("/api/admin", middleware.ValidateAPIKey())
+	admin.POST("/invitations", handlers.CreateInvitationHandler)
+
+	// Public Routes
+	r.GET("/api/invitations/:token", handlers.ValidateInvitationHandler)
+	r.POST("/api/register", handlers.RegisterHandler)
+	r.POST("/api/login", handlers.LoginHandler)
 
 	// Console WebSocket
 	api.GET("/console", handlers.ConsoleHandler)
