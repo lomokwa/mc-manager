@@ -11,6 +11,13 @@ definitions:
           type: string
         type: object
     type: object
+  types.UpdateServerPropertiesRequest:
+    properties:
+      properties:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -18,6 +25,60 @@ info:
   title: MC Manager API
   version: "1.0"
 paths:
+  /api/properties:
+    get:
+      description: Returns the effective server.properties — the defaults overlaid
+        with the current file's values.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get server properties
+      tags:
+      - server
+    patch:
+      consumes:
+      - application/json
+      description: Merges the provided key/values into server.properties (falling
+        back to defaults for keys not set yet) and writes the file. Takes effect on
+        the next server start.
+      parameters:
+      - description: Properties to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateServerPropertiesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update server properties
+      tags:
+      - server
   /api/start:
     post:
       consumes:
