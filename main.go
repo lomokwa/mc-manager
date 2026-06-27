@@ -49,6 +49,14 @@ func main() {
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
+
+	// File manager (all paths are confined to the server directory)
+	api.GET("/files", handlers.ListFilesHandler)
+	api.GET("/files/read", handlers.ReadFileHandler)
+	api.PUT("/files", handlers.WriteFileHandler)
+	api.GET("/files/download", handlers.DownloadFileHandler)
+	api.POST("/files/upload", handlers.UploadFileHandler)
+
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
 
 	// Console WebSocket
