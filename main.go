@@ -52,6 +52,7 @@ func main() {
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
+	api.GET("/world", handlers.GetWorldHandler)
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
 
 	// Admin Routes (API key)
