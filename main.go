@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/lomokwa/mc-manager/db"
 	"github.com/lomokwa/mc-manager/handlers"
 	"github.com/lomokwa/mc-manager/middleware"
 	swaggerFiles "github.com/swaggo/files"
@@ -28,6 +29,9 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("no .env file found, using system environment")
 	}
+
+	// Initialize database
+	db.Init(os.Getenv("DB_PATH"))
 
 	r := gin.Default()
 
@@ -50,6 +54,14 @@ func main() {
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
+
+	// Users
+	api.POST("/invitations", handlers.CreateInvitationHandler)
+
+	// Public auth routes (no API key required)
+	r.GET("/api/invitations/:token", handlers.ValidateInvitationHandler)
+	r.POST("/api/register", handlers.RegisterHandler)
+	r.POST("/api/login", handlers.LoginHandler)
 
 	// Console WebSocket
 	api.GET("/console", handlers.ConsoleHandler)
