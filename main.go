@@ -47,18 +47,18 @@ func main() {
 	limiter := middleware.NewRateLimiter(10, 20)
 	r.Use(limiter.Middleware())
 
-	// Protected API routes — every /api/* endpoint requires a valid X-API-Key.
-	// Auth is applied to this group only, so the Swagger UI below stays public.
-	api := r.Group("/api", middleware.ValidateAPIKey())
+	// JWT Routes
+	api := r.Group("/api", middleware.ValidateJWT())
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
 
-	// Users
-	api.POST("/invitations", handlers.CreateInvitationHandler)
+	// Admin Routes (API key)
+	admin := r.Group("/api/admin", middleware.ValidateAPIKey())
+	admin.POST("/invitations", handlers.CreateInvitationHandler)
 
-	// Public auth routes (no API key required)
+	// Public Routes
 	r.GET("/api/invitations/:token", handlers.ValidateInvitationHandler)
 	r.POST("/api/register", handlers.RegisterHandler)
 	r.POST("/api/login", handlers.LoginHandler)

@@ -14,8 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var sql = db.DB
-
 func CreateInvitation() (*types.Invitation, error) {
 
 	// Generate secure random token
@@ -30,7 +28,7 @@ func CreateInvitation() (*types.Invitation, error) {
 	expiresAt := time.Now().Add(24 * time.Hour)
 
 	query := "INSERT INTO invitations (token, expires_at) VALUES (?, ?)"
-	_, err := sql.Exec(query, token, expiresAt)
+	_, err := db.DB.Exec(query, token, expiresAt)
 	if err != nil {
 		log.Printf("failed to insert invitation into database: %v", err)
 		return nil, err
