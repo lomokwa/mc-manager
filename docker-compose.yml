@@ -6,5 +6,6 @@ services:
       - "25565:25565" # Port for minecraft server
     volumes:
       - ./minecraft-server:/app/minecraft-server
+      - ./data:/app/data
     restart: unless-stopped
     command: ./server
