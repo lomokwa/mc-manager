@@ -15,9 +15,37 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/start": {
+        "/api/server": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns whether a server jar has been created",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Check if server exists",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Downloads the server jar if needed, prepares server files, and starts the process",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Downloads the server jar and prepares server files",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +55,7 @@ const docTemplate = `{
                 "tags": [
                     "server"
                 ],
-                "summary": "Start the Minecraft server",
+                "summary": "Create a new Minecraft server",
                 "parameters": [
                     {
                         "description": "Server configuration",
@@ -35,30 +63,93 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/types.StartServerRequest"
+                            "$ref": "#/definitions/types.CreateServerRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/types.APIResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/types.APIResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes the server jar and all server files",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Delete the Minecraft server",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/start": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Starts the Minecraft server process",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server"
+                ],
+                "summary": "Start the Minecraft server",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
                         }
                     }
                 }
@@ -115,8 +206,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "types.StartServerRequest": {
+        "types.APIResponse": {
             "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "types.CreateServerRequest": {
+            "type": "object",
+            "required": [
+                "serverType"
+            ],
             "properties": {
                 "configureProperties": {
                     "type": "boolean"
@@ -124,11 +230,20 @@ const docTemplate = `{
                 "createLaunchScript": {
                     "type": "boolean"
                 },
+                "loaderVersion": {
+                    "type": "string"
+                },
                 "properties": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "releaseVersion": {
+                    "type": "string"
+                },
+                "serverType": {
+                    "type": "string"
                 }
             }
         }
