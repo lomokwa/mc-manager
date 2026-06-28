@@ -1,10 +1,15 @@
 package types
 
-type StartServerRequest struct {
+type CreateServerRequest struct {
+	ServerType          string            `json:"serverType" binding:"required"`
+	ReleaseVersion      string            `json:"releaseVersion"`
+	LoaderVersion       string            `json:"loaderVersion"`
 	CreateLaunchScript  bool              `json:"createLaunchScript"`
 	ConfigureProperties bool              `json:"configureProperties"`
 	Properties          map[string]string `json:"properties"`
-	ReleaseVersion      string            `json:"releaseVersion"`
+}
+
+type StartServerRequest struct {
 }
 
 type UpdateServerPropertiesRequest struct {

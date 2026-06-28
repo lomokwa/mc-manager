@@ -14,7 +14,7 @@ import (
 	"github.com/lomokwa/mc-manager/utils"
 )
 
-func DownloadLatestServerJar(destPath string, releaseVersion string) error {
+func DownloadServerJar(destPath string, releaseVersion string) error {
 	log.Printf("downloading version manifest")
 	res, err := http.Get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
 	if err != nil {
@@ -87,6 +87,42 @@ func DownloadLatestServerJar(destPath string, releaseVersion string) error {
 
 	log.Printf("server jar download complete")
 
+	return nil
+}
+
+func DownloadFabricJar(destPath string, gameVersion string, loaderVersion string) error {
+	// Get latest installer version
+	res, err := http.Get("https://meta.fabricmc.net/v2/versions/installer")
+	if err != nil {
+		return fmt.Errorf("failed to fetch fabric installer versions: %w", err)
+	}
+	defer res.Body.Close()
+
+	var installers []struct {
+		Version string `json:"version"`
+		Stable  bool   `json:"stable"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&installers); err != nil {
+		return fmt.Errorf("failed to decode fabric installer versions: %w", err)
+	}
+
+	if len(installers) == 0 {
+		return fmt.Errorf("no fabric installer versions found")
+	}
+
+	installerVersion := installers[0].Version
+
+	jarURL := fmt.Sprintf(
+		"https://meta.fabricmc.net/v2/versions/loader/%s/%s/%s/server/jar",
+		gameVersion, loaderVersion, installerVersion,
+	)
+
+	log.Printf("downloading fabric server jar to %s", destPath)
+	if err := utils.DownloadFile(jarURL, destPath); err != nil {
+		return fmt.Errorf("failed to download fabric server jar: %w", err)
+	}
+
+	log.Printf("fabric server jar download complete")
 	return nil
 }
 
@@ -267,4 +303,21 @@ func ListPlayers() ([]types.Player, error) {
 		})
 	}
 	return players, nil
+}
+
+func DeleteServer() error {
+	// Remove everything in the server directory except the directory itself
+	entries, err := os.ReadDir(ServerDir)
+	if err != nil {
+		return fmt.Errorf("failed to read server directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		path := filepath.Join(ServerDir, entry.Name())
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", path, err)
+		}
+	}
+
+	return nil
 }

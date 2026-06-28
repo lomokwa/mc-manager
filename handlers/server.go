@@ -10,49 +10,82 @@ import (
 	"github.com/lomokwa/mc-manager/utils"
 )
 
-// @Summary Start the Minecraft server
-// @Description Downloads the server jar if needed, prepares server files, and starts the process
+// @Summary Create a new Minecraft server
+// @Description Downloads the server jar and prepares server files
 // @Tags server
 // @Accept json
 // @Produce json
-// @Param request body types.StartServerRequest true "Server configuration"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /api/start [post]
-func StartServerHandler(c *gin.Context) {
-	log.Printf("start request received")
+// @Param request body types.CreateServerRequest true "Server configuration"
+// @Success 201 {object} types.APIResponse
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security BearerAuth
+// @Router /api/server [post]
+func CreateServerHandler(c *gin.Context) {
+	log.Printf("create server request received")
 
-	var req types.StartServerRequest
+	var req types.CreateServerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "invalid request body"})
 		return
 	}
 
 	if err := types.ValidateServerProperties(req.Properties); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: err.Error()})
 		return
 	}
 
-	if !utils.FileExists("./minecraft-server/server.jar") {
-		log.Printf("server.jar not found, downloading latest")
-		err := services.DownloadLatestServerJar("./minecraft-server/server.jar", req.ReleaseVersion)
-		if err != nil {
+	if utils.FileExists(services.ServerJarPath) {
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "server already exists"})
+		return
+	}
+
+	switch req.ServerType {
+	case "vanilla":
+		if err := services.DownloadServerJar(services.ServerJarPath, req.ReleaseVersion); err != nil {
 			log.Printf("failed to download server.jar: %v", err)
 			c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
 			return
 		}
-		log.Printf("server.jar downloaded successfully")
+	case "fabric":
+		if err := services.DownloadFabricJar(services.ServerJarPath, req.ReleaseVersion, req.LoaderVersion); err != nil {
+			log.Printf("failed to download server.jar: %v", err)
+			c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
+			return
+		}
+	default:
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "unsupported server type"})
+		return
 	}
 
+	log.Printf("server.jar downloaded successfully")
+
 	log.Printf("creating server files")
-	if err := services.PrepareServerFiles("./minecraft-server", req.CreateLaunchScript, req.ConfigureProperties, req.Properties); err != nil {
+	if err := services.PrepareServerFiles(services.ServerDir, req.CreateLaunchScript, req.ConfigureProperties, req.Properties); err != nil {
 		log.Printf("failed to prepare server files: %v", err)
 		c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
 		return
 	}
 
-	log.Printf("starting server process")
+	c.JSON(http.StatusCreated, types.APIResponse{Success: true})
+}
+
+// @Summary Start the Minecraft server
+// @Description Starts the Minecraft server process
+// @Tags server
+// @Produce json
+// @Success 200 {object} types.APIResponse
+// @Failure 400 {object} types.APIResponse
+// @Security BearerAuth
+// @Router /api/start [post]
+func StartServerHandler(c *gin.Context) {
+	log.Printf("start request received")
+
+	if !utils.FileExists(services.ServerJarPath) {
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "server not created yet, use POST /api/server first"})
+		return
+	}
+
 	output, err := services.StartServerProcess()
 	if err != nil {
 		log.Printf("failed to start server process: %v", err)
