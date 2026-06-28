@@ -74,3 +74,4 @@ pause
 `
 
 const ServerDir = "./minecraft-server"
+const ServerJarPath = ServerDir + "/server.jar"
