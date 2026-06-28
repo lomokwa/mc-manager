@@ -1,15 +1,31 @@
 basePath: /
 definitions:
-  types.StartServerRequest:
+  types.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  types.CreateServerRequest:
     properties:
       configureProperties:
         type: boolean
       createLaunchScript:
         type: boolean
+      loaderVersion:
+        type: string
       properties:
         additionalProperties:
           type: string
         type: object
+      releaseVersion:
+        type: string
+      serverType:
+        type: string
+    required:
+    - serverType
     type: object
 host: localhost:8080
 info:
@@ -18,37 +34,90 @@ info:
   title: MC Manager API
   version: "1.0"
 paths:
-  /api/start:
-    post:
-      consumes:
-      - application/json
-      description: Downloads the server jar if needed, prepares server files, and
-        starts the process
-      parameters:
-      - description: Server configuration
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/types.StartServerRequest'
+  /api/server:
+    delete:
+      description: Removes the server jar and all server files
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/types.APIResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/types.APIResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete the Minecraft server
+      tags:
+      - server
+    get:
+      description: Returns whether a server jar has been created
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Check if server exists
+      tags:
+      - server
+    post:
+      consumes:
+      - application/json
+      description: Downloads the server jar and prepares server files
+      parameters:
+      - description: Server configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/types.CreateServerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new Minecraft server
+      tags:
+      - server
+  /api/start:
+    post:
+      description: Starts the Minecraft server process
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - BearerAuth: []
       summary: Start the Minecraft server
       tags:
       - server

@@ -97,6 +97,49 @@ func StartServerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: output})
 }
 
+// @Summary Delete the Minecraft server
+// @Description Removes the server jar and all server files
+// @Tags server
+// @Produce json
+// @Success 200 {object} types.APIResponse
+// @Failure 400 {object} types.APIResponse
+// @Failure 500 {object} types.APIResponse
+// @Security BearerAuth
+// @Router /api/server [delete]
+func DeleteServerHandler(c *gin.Context) {
+	log.Printf("delete server request received")
+
+	if services.IsServerRunning() {
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "cannot delete server while it is running"})
+		return
+	}
+
+	if !utils.FileExists(services.ServerJarPath) {
+		c.JSON(http.StatusBadRequest, types.APIResponse{Error: "no server to delete"})
+		return
+	}
+
+	if err := services.DeleteServer(); err != nil {
+		log.Printf("failed to delete server: %v", err)
+		c.JSON(http.StatusInternalServerError, types.APIResponse{Error: err.Error()})
+		return
+	}
+
+	log.Printf("server deleted successfully")
+	c.JSON(http.StatusOK, types.APIResponse{Success: true})
+}
+
+// @Summary Check if server exists
+// @Description Returns whether a server jar has been created
+// @Tags server
+// @Produce json
+// @Success 200 {object} types.APIResponse
+// @Security BearerAuth
+// @Router /api/server [get]
+func ServerExistsHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: gin.H{"exists": utils.FileExists(services.ServerJarPath)}})
+}
+
 // @Summary Stop the Minecraft server
 // @Description Stops the running Minecraft server process
 // @Tags server
