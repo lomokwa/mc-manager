@@ -14,6 +14,32 @@ import (
 	"github.com/lomokwa/mc-manager/utils"
 )
 
+type ServerMeta struct {
+	ServerType    string `json:"serverType"`
+	GameVersion   string `json:"gameVersion"`
+	LoaderVersion string `json:"loaderVersion,omitempty"`
+}
+
+func SaveServerMeta(meta ServerMeta) error {
+	data, err := json.MarshalIndent(meta, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal server meta: %w", err)
+	}
+	return utils.WriteFile(ServerMetaPath, data)
+}
+
+func LoadServerMeta() (*ServerMeta, error) {
+	data, err := os.ReadFile(ServerMetaPath)
+	if err != nil {
+		return nil, err
+	}
+	var meta ServerMeta
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return nil, fmt.Errorf("failed to decode server meta: %w", err)
+	}
+	return &meta, nil
+}
+
 func DownloadServerJar(destPath string, releaseVersion string) error {
 	log.Printf("downloading version manifest")
 	res, err := http.Get("https://launchermeta.mojang.com/mc/game/version_manifest.json")

@@ -67,6 +67,15 @@ func CreateServerHandler(c *gin.Context) {
 		return
 	}
 
+	meta := services.ServerMeta{
+		ServerType:    req.ServerType,
+		GameVersion:   req.ReleaseVersion,
+		LoaderVersion: req.LoaderVersion,
+	}
+	if err := services.SaveServerMeta(meta); err != nil {
+		log.Printf("failed to save server meta: %v", err)
+	}
+
 	c.JSON(http.StatusCreated, types.APIResponse{Success: true})
 }
 
@@ -137,7 +146,18 @@ func DeleteServerHandler(c *gin.Context) {
 // @Security BearerAuth
 // @Router /api/server [get]
 func ServerExistsHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: gin.H{"exists": utils.FileExists(services.ServerJarPath)}})
+	exists := utils.FileExists(services.ServerJarPath)
+	data := gin.H{"exists": exists}
+
+	if exists {
+		if meta, err := services.LoadServerMeta(); err == nil {
+			data["serverType"] = meta.ServerType
+			data["gameVersion"] = meta.GameVersion
+			data["loaderVersion"] = meta.LoaderVersion
+		}
+	}
+
+	c.JSON(http.StatusOK, types.APIResponse{Success: true, Data: data})
 }
 
 // @Summary Stop the Minecraft server
