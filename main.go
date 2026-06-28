@@ -38,7 +38,7 @@ func main() {
 	// Cors config
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins(),
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key", "ngrok-skip-browser-warning"},
 		AllowCredentials: true,
 	}))
@@ -49,6 +49,9 @@ func main() {
 
 	// JWT Routes
 	api := r.Group("/api", middleware.ValidateJWT())
+	api.POST("/server", handlers.CreateServerHandler)
+	api.GET("/server", handlers.ServerExistsHandler)
+	api.DELETE("/server", handlers.DeleteServerHandler)
 	api.POST("/start", handlers.StartServerHandler)
 	api.POST("/stop", handlers.StopServerHandler)
 	api.GET("/players", handlers.ListPlayersHandler)
