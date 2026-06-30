@@ -6,6 +6,16 @@ import (
 	"github.com/lomokwa/mc-manager/types"
 )
 
+func GetServerPropertiesHandler(c *gin.Context) {
+	props, err := services.GetServerProperties()
+	if err != nil {
+		c.JSON(500, types.APIResponse{Error: "failed to read server properties"})
+		return
+	}
+
+	c.JSON(200, types.APIResponse{Success: true, Data: props})
+}
+
 func UpdateServerPropertiesHandler(c *gin.Context) {
 	var req types.UpdateServerPropertiesRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -348,6 +348,26 @@ func DeleteServer() error {
 	return nil
 }
 
+func GetServerProperties() (map[string]string, error) {
+	data, err := os.ReadFile(filepath.Join(ServerDir, "server.properties"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read server.properties: %w", err)
+	}
+
+	props := make(map[string]string)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			props[parts[0]] = parts[1]
+		}
+	}
+	return props, nil
+}
+
 func UpdateServerProperties(properties map[string]string) error {
 	data, err := os.ReadFile(filepath.Join(ServerDir, "server.properties"))
 	if err != nil {
