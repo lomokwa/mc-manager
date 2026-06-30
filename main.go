@@ -59,7 +59,7 @@ func main() {
 	api.PATCH("/properties", handlers.UpdateServerPropertiesHandler)
 
 	// Admin Routes (API key)
-	admin := r.Group("/api/admin", middleware.ValidateAPIKey())
+	admin := r.Group("/api/admin", middleware.ValidateAPIKeyOrJWT())
 	admin.POST("/invitations", handlers.CreateInvitationHandler)
 
 	// Public Routes
