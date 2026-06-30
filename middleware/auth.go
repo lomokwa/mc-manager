@@ -72,3 +72,46 @@ func ValidateJWT() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func ValidateAPIKeyOrJWT() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Validate API key first, if not fallback to JWT
+		apiKey := c.Request.Header.Get("X-API-Key")
+		if apiKey == "" {
+			apiKey = c.Query("key")
+		}
+		if apiKey != "" && apiKey == os.Getenv("API_KEY") {
+			c.Next()
+			return
+		}
+
+		var tokenString string
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == authHeader {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, types.APIResponse{Error: "invalid Authorization format"})
+				return
+			}
+		} else if t := c.Query("token"); t != "" {
+			tokenString = t
+		}
+
+		if tokenString != "" {
+			token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+				return []byte(os.Getenv("JWT_SECRET")), nil
+			})
+			if err == nil && token.Valid {
+				claims, ok := token.Claims.(jwt.MapClaims)
+				if ok {
+					c.Set("userID", claims["user_id"])
+					c.Set("username", claims["username"])
+					c.Next()
+					return
+				}
+			}
+		}
+
+		c.AbortWithStatusJSON(http.StatusUnauthorized, types.APIResponse{Error: "valid API key or JWT required"})
+	}
+}
