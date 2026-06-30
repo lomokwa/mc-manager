@@ -347,3 +347,53 @@ func DeleteServer() error {
 
 	return nil
 }
+
+func GetServerProperties() (map[string]string, error) {
+	data, err := os.ReadFile(filepath.Join(ServerDir, "server.properties"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read server.properties: %w", err)
+	}
+
+	props := make(map[string]string)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			props[parts[0]] = parts[1]
+		}
+	}
+	return props, nil
+}
+
+func UpdateServerProperties(properties map[string]string) error {
+	data, err := os.ReadFile(filepath.Join(ServerDir, "server.properties"))
+	if err != nil {
+		return fmt.Errorf("failed to read server.properties: %w", err)
+	}
+
+	existing := make(map[string]string)
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			existing[parts[0]] = parts[1]
+		}
+	}
+
+	for k, v := range properties {
+		existing[k] = v
+	}
+
+	var content strings.Builder
+	for k, v := range existing {
+		fmt.Fprintf(&content, "%s=%s\n", k, v)
+	}
+
+	return utils.WriteFile(filepath.Join(ServerDir, "server.properties"), []byte(content.String()))
+}
